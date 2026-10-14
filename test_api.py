@@ -33,6 +33,24 @@ def test_valid_prediction():
     assert response.json()["predicted_class"] in ["malignant", "benign"]
     assert "probabilities" in response.json()
 
+    data = response.json()
+
+    # Check the prediction response
+    assert "predicted_class" in data
+    assert data["predicted_class"] in {"malignant", "benign"}
+
+    # Check the model information
+    assert "model" in data
+    assert data["educational_use_only"] is True
+    assert data["disclaimer"] == "Not a medical diagnostic tool."
+
+    # Check prediction probabilities
+    probabilities = data["probabilities"]
+    assert set(probabilities.keys()) == {"malignant", "benign"}
+    assert all(0 <= p <= 1 for p in probabilities.values())
+    assert abs(sum(probabilities.values()) - 1.0) < 0.001
+
+
 
 def test_rejects_wrong_number_of_features():
     response = client.post(
@@ -53,3 +71,20 @@ def test_rejects_negative_features():
     )
 
     assert response.status_code == 422
+
+
+
+def test_rejects_non_finite_features():
+    # JSON does not support NaN or infinity as standard numeric values.
+    # Send them as strings to check that the API rejects invalid types.
+    for invalid_value in ("NaN", "Infinity", "-Infinity"):
+        features = [1.0] * 30
+        features[0] = invalid_value
+
+        response = client.post(
+            "/predict",
+            json={"features": features},
+        )
+
+        assert response.status_code == 422
+
