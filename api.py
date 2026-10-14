@@ -9,6 +9,10 @@ import pandas as pd
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.extension import _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
 
 # Load environment variables
 load_dotenv()
@@ -33,7 +37,15 @@ target_names = artifact["target_names"]
 logger.info("Model loaded: %s", artifact["model_name"])
 
 # Create FastAPI application
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(title=APP_NAME)
+app.state.limiter = limiter
+
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler,
+)
 
 
 # Request-tracing middleware
@@ -100,11 +112,12 @@ def health():
 
 # Prediction endpoint
 @app.post("/predict")
-def predict(request: PredictionRequest):
+@limiter.limit("10/minute")
+async def predict(data: PredictionRequest, request: Request):
     # Measure prediction processing time
     start_time = time.perf_counter()
 
-    values = request.features
+    values = data.features
 
     # Reject invalid numeric inputs
     if any(not math.isfinite(x) or x < 0 for x in values):

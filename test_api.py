@@ -158,3 +158,17 @@ def test_prediction_handles_model_failure():
     assert response.status_code == 500
     assert response.json() == {"detail": "Prediction failed. Please try again."}
     assert "Internal model details" not in response.text
+
+
+def test_prediction_rate_limit():
+    rate_limit_client = TestClient(app)
+
+    responses = [
+        rate_limit_client.post(
+            "/predict",
+            json={"features": VALID_FEATURES},
+        )
+        for _ in range(11)
+    ]
+
+    assert any(response.status_code == 429 for response in responses)
