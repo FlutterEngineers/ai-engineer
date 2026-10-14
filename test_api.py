@@ -1,4 +1,5 @@
 import uuid
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -145,3 +146,15 @@ def test_request_ids_are_unique():
     assert first_response.status_code == 200
     assert second_response.status_code == 200
     assert first_id != second_id
+
+
+def test_prediction_handles_model_failure():
+    with patch("api.model.predict", side_effect=RuntimeError("Internal model details")):
+        response = client.post(
+            "/predict",
+            json={"features": VALID_FEATURES},
+        )
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Prediction failed. Please try again."}
+    assert "Internal model details" not in response.text
