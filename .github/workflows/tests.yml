@@ -1,5 +1,5 @@
-```yaml
-name: ML API Tests
+
+name: ML API CI
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
 
 jobs:
   test:
+    name: Run Python tests
     runs-on: ubuntu-latest
 
     steps:
@@ -27,4 +28,14 @@ jobs:
 
       - name: Run automated tests
         run: python -m pytest -v
-```
+
+  docker-build:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t ml-prediction-api:ci .
