@@ -14,12 +14,23 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.extension import _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 
+import secrets
+from fastapi import Depends, HTTPException, Security
+from fastapi.security import APIKeyHeader
+
 # Load environment variables
 load_dotenv()
 
 APP_NAME = os.getenv("APP_NAME", "ML Prediction API")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 RATE_LIMIT = os.getenv("RATE_LIMIT", "10/minute")
+
+API_KEY = os.getenv("API_KEY", "")
+
+api_key_header = APIKeyHeader(
+    name="X-API-Key",
+    auto_error=False,
+)
 
 # Configure application logging
 logging.basicConfig(
@@ -111,10 +122,31 @@ def health():
     }
 
 
+def verify_api_key(api_key: str | None = Security(api_key_header)):
+    if not API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="API key is not configured",
+        )
+
+    if api_key is None or not secrets.compare_digest(api_key, API_KEY):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or missing API key",
+        )
+
+    return api_key
+
+
+
 # Prediction endpoint
 @app.post("/predict")
 @limiter.limit(RATE_LIMIT)
-async def predict(data: PredictionRequest, request: Request):
+async def predict(
+    data: PredictionRequest,
+    request: Request,
+    api_key: str = Depends(verify_api_key),
+):
     # Measure prediction processing time
     start_time = time.perf_counter()
 
@@ -170,3 +202,4 @@ async def predict(data: PredictionRequest, request: Request):
             status_code=500,
             detail="Prediction failed. Please try again.",
         ) from exc
+

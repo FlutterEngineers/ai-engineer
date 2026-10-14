@@ -7,6 +7,8 @@ from api import app
 
 client = TestClient(app)
 
+API_HEADERS = {"X-API-Key": "dev-secret-change-this-key"}
+
 # Example measurements from the educational dataset
 VALID_FEATURES = [
     17.99,
@@ -54,6 +56,7 @@ def test_valid_prediction():
     response = client.post(
         "/predict",
         json={"features": VALID_FEATURES},
+        headers=API_HEADERS        
     )
 
     assert response.status_code == 200
@@ -82,6 +85,7 @@ def test_rejects_wrong_number_of_features():
     response = client.post(
         "/predict",
         json={"features": [1, 2, 3]},
+        headers=API_HEADERS
     )
 
     assert response.status_code == 422
@@ -94,6 +98,7 @@ def test_rejects_negative_features():
     response = client.post(
         "/predict",
         json={"features": features},
+        headers=API_HEADERS
     )
 
     assert response.status_code == 422
@@ -109,6 +114,7 @@ def test_rejects_non_finite_features():
         response = client.post(
             "/predict",
             json={"features": features},
+            headers=API_HEADERS
         )
 
         assert response.status_code == 422
@@ -153,6 +159,7 @@ def test_prediction_handles_model_failure():
         response = client.post(
             "/predict",
             json={"features": VALID_FEATURES},
+            headers=API_HEADERS
         )
 
     assert response.status_code == 500
@@ -167,8 +174,31 @@ def test_prediction_rate_limit():
         rate_limit_client.post(
             "/predict",
             json={"features": VALID_FEATURES},
+            headers=API_HEADERS
         )
         for _ in range(11)
     ]
 
     assert any(response.status_code == 429 for response in responses)
+
+
+
+def test_prediction_rejects_missing_api_key():
+    response = client.post(
+        "/predict",
+        json={"features": VALID_FEATURES},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid or missing API key"
+
+
+def test_prediction_rejects_invalid_api_key():
+    response = client.post(
+        "/predict",
+        json={"features": VALID_FEATURES},
+        headers={"X-API-Key": "wrong-key"},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid or missing API key"
