@@ -28,6 +28,12 @@ jobs:
 
       - name: Run automated tests
         run: python -m pytest -v
+        
+      - name: Run Ruff lint checks
+        run: python -m ruff check api.py test_api.py smoke_test.py
+
+      - name: Check Python formatting
+        run: python -m ruff format --check api.py test_api.py smoke_test.py
 
 
  

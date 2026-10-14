@@ -1,4 +1,3 @@
-
 import logging
 import math
 
@@ -66,9 +65,7 @@ def predict(request: PredictionRequest):
             probabilities = model.predict_proba(sample)[0]
             result["probabilities"] = {
                 target_names[int(class_id)]: round(float(probability), 4)
-                for class_id, probability in zip(
-                    model.classes_, probabilities
-                )
+                for class_id, probability in zip(model.classes_, probabilities)
             }
 
         logger.info("Prediction completed successfully")

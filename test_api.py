@@ -1,17 +1,41 @@
-
 from fastapi.testclient import TestClient
+
 from api import app
 
 client = TestClient(app)
 
 # Example measurements from the educational dataset
 VALID_FEATURES = [
-    17.99, 10.38, 122.8, 1001, 0.1184,
-    0.2776, 0.3001, 0.1471, 0.2419, 0.07871,
-    1.095, 0.9053, 8.589, 153.4, 0.006399,
-    0.04904, 0.05373, 0.01587, 0.03003, 0.006193,
-    25.38, 17.33, 184.6, 2019, 0.1622,
-    0.6656, 0.7119, 0.2654, 0.4601, 0.1189,
+    17.99,
+    10.38,
+    122.8,
+    1001,
+    0.1184,
+    0.2776,
+    0.3001,
+    0.1471,
+    0.2419,
+    0.07871,
+    1.095,
+    0.9053,
+    8.589,
+    153.4,
+    0.006399,
+    0.04904,
+    0.05373,
+    0.01587,
+    0.03003,
+    0.006193,
+    25.38,
+    17.33,
+    184.6,
+    2019,
+    0.1622,
+    0.6656,
+    0.7119,
+    0.2654,
+    0.4601,
+    0.1189,
 ]
 
 
@@ -51,7 +75,6 @@ def test_valid_prediction():
     assert abs(sum(probabilities.values()) - 1.0) < 0.001
 
 
-
 def test_rejects_wrong_number_of_features():
     response = client.post(
         "/predict",
@@ -73,7 +96,6 @@ def test_rejects_negative_features():
     assert response.status_code == 422
 
 
-
 def test_rejects_non_finite_features():
     # JSON does not support NaN or infinity as standard numeric values.
     # Send them as strings to check that the API rejects invalid types.
@@ -87,4 +109,3 @@ def test_rejects_non_finite_features():
         )
 
         assert response.status_code == 422
-
