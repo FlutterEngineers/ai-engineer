@@ -19,6 +19,7 @@ load_dotenv()
 
 APP_NAME = os.getenv("APP_NAME", "ML Prediction API")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+RATE_LIMIT = os.getenv("RATE_LIMIT", "10/minute")
 
 # Configure application logging
 logging.basicConfig(
@@ -112,7 +113,7 @@ def health():
 
 # Prediction endpoint
 @app.post("/predict")
-@limiter.limit("10/minute")
+@limiter.limit(RATE_LIMIT)
 async def predict(data: PredictionRequest, request: Request):
     # Measure prediction processing time
     start_time = time.perf_counter()
