@@ -1,5 +1,5 @@
 import json
-import urllib.error
+import time
 import urllib.request
 
 BASE_URL = "http://127.0.0.1:8000"
@@ -32,10 +32,18 @@ def main():
 
     # Synthetic inputs for an educational API smoke test.
     features = [1.0] * 30
+
+    # Start measuring immediately before the prediction request.
+    start_time = time.perf_counter()
+
     status, result = get_json(
         f"{BASE_URL}/predict",
         {"features": features},
     )
+
+    # Calculate end-to-end HTTP response time.
+    elapsed_ms = (time.perf_counter() - start_time) * 1000
+    print(f"Prediction response time: {elapsed_ms:.2f} ms")
 
     assert status == 200
     assert result["predicted_class"] in {"malignant", "benign"}

@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi.testclient import TestClient
 
 from api import app
@@ -109,3 +111,37 @@ def test_rejects_non_finite_features():
         )
 
         assert response.status_code == 422
+
+
+def test_health_endpoint():
+    response = client.get("/health")
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == "ok"
+    assert data["model"] == "Logistic Regression"
+
+
+def test_request_id_header():
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert "X-Request-ID" in response.headers
+
+    request_id = response.headers["X-Request-ID"]
+
+    # Verify that the request ID is a valid UUID
+    uuid.UUID(request_id)
+
+
+def test_request_ids_are_unique():
+    first_response = client.get("/health")
+    second_response = client.get("/health")
+
+    first_id = first_response.headers["X-Request-ID"]
+    second_id = second_response.headers["X-Request-ID"]
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+    assert first_id != second_id
