@@ -30,6 +30,7 @@ jobs:
         run: python -m pytest -v
 
 
+ 
   docker-build:
     name: Build and smoke-test Docker image
     runs-on: ubuntu-latest
@@ -58,7 +59,9 @@ jobs:
           docker logs ml-api-ci
           exit 1
 
+      - name: Test prediction endpoint
+        run: python smoke_test.py
+
       - name: Clean up container
         if: always()
         run: docker rm -f ml-api-ci || true
-
