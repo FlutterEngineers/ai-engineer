@@ -1,6 +1,8 @@
 services:
   ml-api:
     build: .
+    env_file:
+      - .env
     container_name: ml-api-container
     ports:
       - "8000:8000"

@@ -1,16 +1,25 @@
 import logging
 import math
+import os
 
 import joblib
 import pandas as pd
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+load_dotenv()
+
+APP_NAME = os.getenv("APP_NAME", "ML Prediction API")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
 # Configure application logging
+
 logging.basicConfig(
-    level=logging.INFO,
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
+
 logger = logging.getLogger("ml_api")
 
 # Load the trained model
@@ -21,7 +30,8 @@ target_names = artifact["target_names"]
 
 logger.info("Model loaded: %s", artifact["model_name"])
 
-app = FastAPI(title="ML Prediction API")
+
+app = FastAPI(title=APP_NAME)
 
 
 class PredictionRequest(BaseModel):
